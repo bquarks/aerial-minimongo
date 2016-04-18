@@ -119,6 +119,8 @@ LocalCollection.Cursor = function (collection, selector, options) {
 
   if (Meteor.isServer && AerialSR && AerialSR.configured && ((options && !options.cpsr) || !options)) {
     // NOTE: here we find de documents from composr
+
+    // NOTE: handle the errors here
     AerialSR.get(self.collection, selector, options);
   }
 };
@@ -574,6 +576,9 @@ LocalCollection.prototype.insert = function (doc, callback) {
   if (self._docs.has(id))
     throw MinimongoError("Duplicate _id '" + id + "'");
 
+  // TODO: check here for insert the document in the DDBB
+  // if the doc can't be inserted remove it from the local database.
+
   self._saveOriginal(id, undefined);
   self._docs.set(id, doc);
 
@@ -680,6 +685,8 @@ LocalCollection.prototype.remove = function (selector, callback) {
     });
 
     self._saveOriginal(removeId, removeDoc);
+
+    // TODO: here we remove the document if the ddbb returns ok.
     self._docs.remove(removeId);
   }
 
@@ -784,6 +791,7 @@ LocalCollection.prototype.update = function (selector, mod, options, callback) {
     var queryResult = matcher.documentMatches(doc);
     if (queryResult.result) {
       // XXX Should we save the original even if mod ends up being a no-op?
+      // TODO: here we update the doc if the server returns ok.
       self._saveOriginal(id, doc);
       self._modifyAndNotify(doc, mod, recomputeQids, queryResult.arrayIndices);
       ++updateCount;
