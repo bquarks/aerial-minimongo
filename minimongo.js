@@ -7,7 +7,7 @@
 
 // ObserveHandle: the return value of a live query.
 //
-var AerialSR = null;
+var AerialDriver = null;
 
 LocalCollection = function (name, collectionConf) {
   var self = this;
@@ -20,8 +20,8 @@ LocalCollection = function (name, collectionConf) {
 
   self.next_qid = 1; // live query id generator
 
-  if (Meteor.isServer && !AerialSR && collectionConf) {
-    AerialSR = new AerialComposr(collectionConf);
+  if (Meteor.isServer && !AerialDriver && collectionConf) {
+    AerialDriver = new AerialRestDriver(collectionConf);
   }
 
   // qid -> live query object. keys:
@@ -117,11 +117,11 @@ LocalCollection.Cursor = function (collection, selector, options) {
   if (typeof Tracker !== 'undefined')
     self.reactive = (options.reactive === undefined) ? true : options.reactive;
 
-  if (Meteor.isServer && AerialSR && AerialSR.configured && ((options && !options.cpsr) || !options)) {
+  if (Meteor.isServer && AerialDriver && AerialDriver.configured && ((options && !options.cpsr) || !options)) {
     // NOTE: here we find de documents from composr
 
     // NOTE: handle the errors here
-    AerialSR.get(self.collection, selector, options);
+    AerialDriver.get(self.collection, selector, options);
   }
 };
 

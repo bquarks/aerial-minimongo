@@ -18,7 +18,7 @@ Package.onUse(function (api) {
   api.export('Minimongo');
   api.export('MinimongoTest', { testOnly: true });
   api.use(['underscore', 'ejson', 'id-map', 'ordered-dict', 'tracker',
-           'mongo-id', 'random', 'diff-sequence', 'http', 'bquarks:aerial-composr', ]);
+           'mongo-id', 'random', 'diff-sequence', 'http', 'bquarks:aerial-corbel',]);
 
   // This package is used for geo-location queries such as $near
   api.use('geojson-utils');
@@ -52,7 +52,7 @@ Package.onTest(function (api) {
   api.use('minimongo', ['client', 'server']);
   api.use('test-helpers', 'client');
   api.use(['tinytest', 'underscore', 'ejson', 'ordered-dict',
-           'random', 'tracker', 'reactive-var', 'mongo-id',]);
+           'random', 'tracker', 'reactive-var', 'mongo-id', ]);
   api.addFiles('minimongo_tests.js', 'client');
   api.addFiles('wrap_transform_tests.js');
   api.addFiles('minimongo_server_tests.js', 'server');
