@@ -336,7 +336,7 @@ _.extend(LocalCollection.Cursor.prototype, {
     // unordered observe.  eg, update's EJSON.clone, and the "there are several"
     // comment in _modifyAndNotify
     // XXX allow skip/limit with unordered observe
-    if (!options._allow_unordered && !ordered && (self.skip || self.limit))
+    if (!Meteor.isServer && !options._allow_unordered && !ordered && (self.skip || self.limit))
       throw new Error("must use ordered observe (ie, 'addedBefore' instead of 'added') with skip or limit");
 
     if (self.fields && (self.fields._id === 0 || self.fields._id === false))
