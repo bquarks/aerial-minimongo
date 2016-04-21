@@ -12,6 +12,7 @@ var AerialDriver = null;
 LocalCollection = function (name, collectionConf) {
   var self = this;
   self.name = name;
+  self.conf = collectionConf;
 
   // _id -> document (also containing id)
   self._docs = new LocalCollection._IdMap;
@@ -77,8 +78,12 @@ LocalCollection.prototype.find = function (selector, options) {
   // want a selector that matches nothing.
   if (arguments.length === 0)
     selector = {};
-
-  return new LocalCollection.Cursor(this, selector, options);
+  if (Meteor.isServer) {
+    return new LocalCollection.Cursor(new LocalCollection(this.name, this.conf), selector, options);
+  }
+  else {
+    return new LocalCollection.Cursor(this, selector, options);
+  }
 };
 
 // don't call this ctor directly.  use LocalCollection.find().
