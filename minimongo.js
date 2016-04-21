@@ -90,6 +90,8 @@ LocalCollection.Cursor = function (collection, selector, options) {
   self.collection = collection;
   self.sorter = null;
   self.matcher = new Minimongo.Matcher(selector);
+  self._selector = selector;
+  self._options = options;
 
   if (LocalCollection._selectorIsId(selector)) {
     // stash for fast path
@@ -242,6 +244,10 @@ LocalCollection.Cursor.prototype.count = function () {
   if (self.reactive)
     self._depend({ added: true, removed: true },
                  true /* allow the observe to be unordered */);
+  if (Meteor.isServer) {
+    // TODO: count here the objects from a collection
+    return AerialDriver.count(self.collection, self._selector, self._options);
+  }
 
   return self._getRawObjects({ ordered: true }).length;
 };
