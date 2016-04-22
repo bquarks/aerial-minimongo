@@ -3,10 +3,10 @@ Package.describe({
   version: '0.0.1',
 
   // Brief, one-line summary of the package.
-  summary: '',
+  summary: 'Modified version of minimongo to connect with an api rest',
 
   // URL to the Git repository containing the source code for this package.
-  git: '',
+  git: 'https://github.com/bquarks/aerial-minimongo.git',
 
   // By default, Meteor will default to using README.md for documentation.
   // To avoid submitting documentation, set this field to null.
@@ -14,11 +14,12 @@ Package.describe({
 });
 
 Package.onUse(function (api) {
+  api.versionsFrom('METEOR@1.2.1');
   api.export('LocalCollection');
   api.export('Minimongo');
   api.export('MinimongoTest', { testOnly: true });
   api.use(['underscore', 'ejson', 'id-map', 'ordered-dict', 'tracker',
-           'mongo-id', 'random', 'diff-sequence', 'http', 'bquarks:aerial-corbel',]);
+           'mongo-id', 'random', 'diff-sequence', 'http', 'bquarks:aerial-corbel@0.0.1',]);
 
   // This package is used for geo-location queries such as $near
   api.use('geojson-utils');
