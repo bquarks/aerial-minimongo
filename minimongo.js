@@ -872,6 +872,20 @@ LocalCollection.prototype.upsert = function (selector, mod, options, callback) {
   }), callback);
 };
 
+LocalCollection.prototype.distinct = function (fields) {
+  if (Meteor.isServer) {
+    if (fields) {
+      return AerialDriver.distinct(fields);
+    }
+    else {
+      throw new Error('Yoy must specify the fields to distinct');
+    }
+  }
+  else {
+    throw new Error('This method only can be used in the server side');
+  }
+};
+
 LocalCollection.prototype._modifyAndNotify = function (
     doc, mod, recomputeQids, arrayIndices) {
   var self = this;
