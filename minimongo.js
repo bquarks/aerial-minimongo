@@ -874,7 +874,7 @@ LocalCollection.prototype.upsert = function (selector, mod, options, callback) {
 
 LocalCollection.prototype.distinct = function (field) {
   if (Meteor.isServer) {
-    if (fields) {
+    if (field) {
       return AerialDriver.distinct(this, {}, {}, field);
     }
     else {
