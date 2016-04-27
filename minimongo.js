@@ -872,10 +872,10 @@ LocalCollection.prototype.upsert = function (selector, mod, options, callback) {
   }), callback);
 };
 
-LocalCollection.prototype.distinct = function (fields) {
+LocalCollection.prototype.distinct = function (field) {
   if (Meteor.isServer) {
     if (fields) {
-      return AerialDriver.distinct(fields);
+      return AerialDriver.distinct(this, {}, {}, field);
     }
     else {
       throw new Error('Yoy must specify the fields to distinct');
