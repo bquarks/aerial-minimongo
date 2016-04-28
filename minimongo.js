@@ -54,6 +54,13 @@ MinimongoError = function (message) {
   return e;
 };
 
+var checkColl = function (name) {
+  if (name === 'users' || name.indexOf('meteor') !== -1) {
+    return false;
+  }
+  return true;
+}
+
 // options may include sort, skip, limit, reactive
 // sort may be any of these forms:
 //     {a: 1, b: -1}
@@ -78,7 +85,7 @@ LocalCollection.prototype.find = function (selector, options) {
   // want a selector that matches nothing.
   if (arguments.length === 0)
     selector = {};
-  if (Meteor.isServer) {
+  if (Meteor.isServer && checkColl(this.name)) {
     return new LocalCollection.Cursor(new LocalCollection(this.name, this.conf), selector, options);
   }
   else {
@@ -124,7 +131,7 @@ LocalCollection.Cursor = function (collection, selector, options) {
   if (typeof Tracker !== 'undefined')
     self.reactive = (options.reactive === undefined) ? true : options.reactive;
 
-  if (Meteor.isServer && AerialDriver && AerialDriver.configured && ((options && !options.cpsr) || !options)) {
+  if (Meteor.isServer && AerialDriver && AerialDriver.configured && checkColl(self.collection.name) && ((options && !options.cpsr) || !options)) {
     // NOTE: here we find de documents from composr
 
     // NOTE: handle the errors here
