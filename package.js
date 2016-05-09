@@ -19,7 +19,7 @@ Package.onUse(function (api) {
   api.export('Minimongo');
   api.export('MinimongoTest', { testOnly: true });
   api.use(['underscore', 'ejson', 'id-map', 'ordered-dict', 'tracker',
-           'mongo-id', 'random', 'diff-sequence', 'http', 'bquarks:aerial-corbel@0.0.9',]);
+           'mongo-id', 'random', 'diff-sequence', 'http', 'bquarks:aerial-corbel@0.1.2', 'bquarks:aerial-accounts@0.2.1']);
 
   // This package is used for geo-location queries such as $near
   api.use('geojson-utils');
