@@ -1,6 +1,6 @@
 Package.describe({
   name: 'bquarks:aerial-minimongo',
-  version: '0.0.13',
+  version: '0.0.14',
 
   // Brief, one-line summary of the package.
   summary: 'Modified version of minimongo to connect with an api rest',
@@ -19,7 +19,9 @@ Package.onUse(function (api) {
   api.export('Minimongo');
   api.export('MinimongoTest', { testOnly: true });
   api.use(['underscore', 'ejson', 'id-map', 'ordered-dict', 'tracker',
-           'mongo-id', 'random', 'diff-sequence', 'http', 'bquarks:aerial-corbel@0.2.0', 'bquarks:aerial-accounts@0.3.0']);
+           'mongo-id', 'random', 'diff-sequence', 'http']);
+
+  api.use(['bquarks:aerial-corbel', 'bquarks:aerial-accounts'], { weak: false });
 
   // This package is used for geo-location queries such as $near
   api.use('geojson-utils');
