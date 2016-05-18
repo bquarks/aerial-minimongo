@@ -736,6 +736,7 @@ LocalCollection.prototype.remove = function (selector, callback) {
 // XXX atomicity: if multi is true, and one modification fails, do
 // we rollback the whole operation, or what?
 LocalCollection.prototype.update = function (selector, mod, options, callback) {
+
   var self = this;
   if (!callback && options instanceof Function) {
     callback = options;
@@ -743,6 +744,12 @@ LocalCollection.prototype.update = function (selector, mod, options, callback) {
   }
 
   if (!options) options = {};
+
+  if ( Meteor.isServer ) {
+  console.log(options, 'options');
+    options.cpsr = true;
+   AerialDriver.update(this, selector, mod, options);
+  }
 
   var matcher = new Minimongo.Matcher(selector);
 
@@ -793,6 +800,7 @@ LocalCollection.prototype.update = function (selector, mod, options, callback) {
           }
 
           docMap.set(doc._id, docToMemoize);
+
           return docToMemoize;
         }
       };
@@ -810,7 +818,10 @@ LocalCollection.prototype.update = function (selector, mod, options, callback) {
     if (queryResult.result) {
       // XXX Should we save the original even if mod ends up being a no-op?
       // TODO: here we update the doc if the server returns ok.
-      self._saveOriginal(id, doc);
+      if ( !options.cpsr ) {
+        self._saveOriginal(id, doc);
+      }
+
       self._modifyAndNotify(doc, mod, recomputeQids, queryResult.arrayIndices);
       ++updateCount;
       if (!options.multi)
@@ -820,10 +831,14 @@ LocalCollection.prototype.update = function (selector, mod, options, callback) {
     return true;
   });
 
+
   _.each(recomputeQids, function (dummy, qid) {
+
     var query = self.queries[qid];
-    if (query)
+    if (query) {
+
       self._recomputeResults(query, qidToOriginalResults[qid]);
+    }
   });
 
   self._observeQueue.drain();
