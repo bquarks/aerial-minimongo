@@ -21,8 +21,8 @@ LocalCollection = function (name, collectionConf) {
 
   self.next_qid = 1; // live query id generator
 
-  if (Meteor.isServer && !AerialDriver && collectionConf) {
-    AerialDriver = new AerialRestDriver(collectionConf);
+    if (Meteor.isServer && !AerialDriver) {
+    AerialDriver = new AerialRestDriver();
   }
 
   // qid -> live query object. keys:
@@ -746,9 +746,10 @@ LocalCollection.prototype.update = function (selector, mod, options, callback) {
   if (!options) options = {};
 
   if ( Meteor.isServer ) {
-  console.log(options, 'options');
     options.cpsr = true;
-   AerialDriver.update(this, selector, mod, options);
+
+   AerialDriver.update(this, selector, mod, options); //"this" parameter is the collection
+   AerialDriver.get(this, selector, options);
   }
 
   var matcher = new Minimongo.Matcher(selector);
