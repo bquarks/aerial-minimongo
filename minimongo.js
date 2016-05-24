@@ -9,13 +9,13 @@
 //
 var AerialDriver = null;
 
-LocalCollection = function (name, collectionConf) {
+LocalCollection = function (name, collectionConf, docs) {
   var self = this;
   self.name = name;
   self.conf = collectionConf;
 
   // _id -> document (also containing id)
-  self._docs = new LocalCollection._IdMap;
+  self._docs = docs || new LocalCollection._IdMap;
 
   self._observeQueue = new Meteor._SynchronousQueue();
 
@@ -86,7 +86,7 @@ LocalCollection.prototype.find = function (selector, options) {
   if (arguments.length === 0)
     selector = {};
   if (Meteor.isServer && checkColl(this.name)) {
-    return new LocalCollection.Cursor(new LocalCollection(this.name, this.conf), selector, options);
+    return new LocalCollection.Cursor(new LocalCollection(this.name, this.conf, this._docs), selector, options);
   }
   else {
     return new LocalCollection.Cursor(this, selector, options);
@@ -745,8 +745,7 @@ LocalCollection.prototype.update = function (selector, mod, options, callback) {
 
   if (!options) options = {};
 
-  if ( Meteor.isServer ) {
-    options.cpsr = true;
+  if ( Meteor.isServer && options.cpsr ) {
 
    AerialDriver.update(this, selector, mod, options); //"this" parameter is the collection
    AerialDriver.get(this, selector, options);

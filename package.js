@@ -21,7 +21,7 @@ Package.onUse(function (api) {
   api.use(['underscore', 'ejson', 'id-map', 'ordered-dict', 'tracker',
           'mongo-id', 'random', 'diff-sequence', 'http']);
 
-  api.use(['bquarks:aerial-corbel@0.2.1', 'bquarks:aerial-accounts@0.5.0'], { weak: false });
+  api.use(['bquarks:aerial-corbel@0.2.3', 'bquarks:aerial-accounts@0.5.0'], { weak: false });
 
   // This package is used for geo-location queries such as $near
   api.use('geojson-utils');
