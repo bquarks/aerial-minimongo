@@ -10,36 +10,36 @@
 var AerialDriver = null;
 
 LocalCollection = function (name, collectionConf, docs) {
-  var self = this;
-  self.name = name;
-  self.conf = collectionConf;
+    var self = this;
+    self.name = name;
+    self.conf = collectionConf;
 
-  // _id -> document (also containing id)
-  self._docs = docs || new LocalCollection._IdMap;
+    // _id -> document (also containing id)
+    self._docs = docs || new LocalCollection._IdMap;
 
-  self._observeQueue = new Meteor._SynchronousQueue();
+    self._observeQueue = new Meteor._SynchronousQueue();
 
-  self.next_qid = 1; // live query id generator
+    self.next_qid = 1; // live query id generator
 
     if (Meteor.isServer && !AerialDriver) {
-    AerialDriver = new AerialRestDriver();
-  }
+        AerialDriver = new AerialRestDriver();
+    }
 
-  // qid -> live query object. keys:
-  //  ordered: bool. ordered queries have addedBefore/movedBefore callbacks.
-  //  results: array (ordered) or object (unordered) of current results
-  //    (aliased with self._docs!)
-  //  resultsSnapshot: snapshot of results. null if not paused.
-  //  cursor: Cursor object for the query.
-  //  selector, sorter, (callbacks): functions
-  self.queries = {};
+    // qid -> live query object. keys:
+    //  ordered: bool. ordered queries have addedBefore/movedBefore callbacks.
+    //  results: array (ordered) or object (unordered) of current results
+    //    (aliased with self._docs!)
+    //  resultsSnapshot: snapshot of results. null if not paused.
+    //  cursor: Cursor object for the query.
+    //  selector, sorter, (callbacks): functions
+    self.queries = {};
 
-  // null if not saving originals; an IdMap from id to original document value if
-  // saving originals. See comments before saveOriginals().
-  self._savedOriginals = null;
+    // null if not saving originals; an IdMap from id to original document value if
+    // saving originals. See comments before saveOriginals().
+    self._savedOriginals = null;
 
-  // True when observers are paused and we should not send callbacks.
-  self.paused = false;
+    // True when observers are paused and we should not send callbacks.
+    self.paused = false;
 };
 
 Minimongo = {};
@@ -49,17 +49,17 @@ Minimongo = {};
 MinimongoTest = {};
 
 MinimongoError = function (message) {
-  var e = new Error(message);
-  e.name = 'MinimongoError';
-  return e;
+    var e = new Error(message);
+    e.name = 'MinimongoError';
+    return e;
 };
 
 var checkColl = function (name) {
-  if (name === 'users' || name.indexOf('meteor') !== -1) {
-    return false;
-  }
-  return true;
-}
+    if (name === 'users' || name.indexOf('meteor') !== - 1) {
+        return false;
+    }
+    return true;
+};
 
 // options may include sort, skip, limit, reactive
 // sort may be any of these forms:
@@ -80,63 +80,64 @@ var checkColl = function (name) {
 // XXX add one more sort form: "key"
 // XXX tests
 LocalCollection.prototype.find = function (selector, options) {
-  // default syntax for everything is to omit the selector argument.
-  // but if selector is explicitly passed in as false or undefined, we
-  // want a selector that matches nothing.
-  if (arguments.length === 0)
-    selector = {};
-  if (Meteor.isServer && checkColl(this.name)) {
-    return new LocalCollection.Cursor(new LocalCollection(this.name, this.conf, this._docs), selector, options);
-  }
-  else {
-    return new LocalCollection.Cursor(this, selector, options);
-  }
+    // default syntax for everything is to omit the selector argument.
+    // but if selector is explicitly passed in as false or undefined, we
+    // want a selector that matches nothing.
+    if (arguments.length === 0)
+      selector = {};
+    if (Meteor.isServer && checkColl(this.name)) {
+        // return new LocalCollection.Cursor(new LocalCollection(this.name, this.conf, this._docs), selector, options);
+        return new LocalCollection.Cursor(this, selector, options);
+    }
+    else {
+        return new LocalCollection.Cursor(this, selector, options);
+    }
 };
 
 // don't call this ctor directly.  use LocalCollection.find().
 
 LocalCollection.Cursor = function (collection, selector, options) {
-  var self = this;
-  if (!options) options = {};
+    var self = this;
+    if (!options) options = {};
 
-  self.collection = collection;
-  self.sorter = null;
-  self.matcher = new Minimongo.Matcher(selector);
-  self._selector = selector;
-  self._options = options;
+    self.collection = collection;
+    self.sorter = null;
+    self.matcher = new Minimongo.Matcher(selector);
+    self._selector = selector;
+    self._options = options;
 
-  if (LocalCollection._selectorIsId(selector)) {
-    // stash for fast path
-    self._selectorId = selector;
-  } else if (LocalCollection._selectorIsIdPerhapsAsObject(selector)) {
-    // also do the fast path for { _id: idString }
-    self._selectorId = selector._id;
-  } else {
-    self._selectorId = undefined;
-    if (self.matcher.hasGeoQuery() || options.sort) {
-      self.sorter = new Minimongo.Sorter(options.sort || [],
-                                         { matcher: self.matcher });
+    if (LocalCollection._selectorIsId(selector)) {
+      // stash for fast path
+      self._selectorId = selector;
+    } else if (LocalCollection._selectorIsIdPerhapsAsObject(selector)) {
+      // also do the fast path for { _id: idString }
+      self._selectorId = selector._id;
+    } else {
+      self._selectorId = undefined;
+      if (self.matcher.hasGeoQuery() || options.sort) {
+        self.sorter = new Minimongo.Sorter(options.sort || [],
+                                           { matcher: self.matcher });
+      }
     }
-  }
 
-  self.skip = options.skip;
-  self.limit = options.limit;
-  self.fields = options.fields;
+    self.skip = options.skip;
+    self.limit = options.limit;
+    self.fields = options.fields;
 
-  self._projectionFn = LocalCollection._compileProjection(self.fields || {});
+    self._projectionFn = LocalCollection._compileProjection(self.fields || {});
 
-  self._transform = LocalCollection.wrapTransform(options.transform);
+    self._transform = LocalCollection.wrapTransform(options.transform);
 
-  // by default, queries register w/ Tracker when it is available.
-  if (typeof Tracker !== 'undefined')
-    self.reactive = (options.reactive === undefined) ? true : options.reactive;
+    // by default, queries register w/ Tracker when it is available.
+    if (typeof Tracker !== 'undefined')
+      self.reactive = (options.reactive === undefined) ? true : options.reactive;
 
-  if (Meteor.isServer && AerialDriver && AerialDriver.configured && checkColl(self.collection.name) && ((options && !options.cpsr) || !options)) {
-    // NOTE: here we find de documents from composr
+    if (Meteor.isServer && AerialDriver && AerialDriver.configured && checkColl(self.collection.name) && ((options && !options.cpsr) || !options)) {
+      // NOTE: here we find de documents from composr
 
-    // NOTE: handle the errors here
-    AerialDriver.get(self.collection, selector, options);
-  }
+      // NOTE: handle the errors here
+      AerialDriver.get(self.collection, selector, options);
+    }
 };
 
 // Since we don't actually have a "nextObject" interface, there's really no
@@ -147,21 +148,21 @@ LocalCollection.Cursor.prototype.rewind = function () {
 };
 
 LocalCollection.prototype.findOne = function (selector, options) {
-  if (arguments.length === 0)
-    selector = {};
+    if (arguments.length === 0)
+      selector = {};
 
-  // NOTE: by setting limit 1 here, we end up using very inefficient
-  // code that recomputes the whole query on each update. The upside is
-  // that when you reactively depend on a findOne you only get
-  // invalidated when the found object changes, not any object in the
-  // collection. Most findOne will be by id, which has a fast path, so
-  // this might not be a big deal. In most cases, invalidation causes
-  // the called to re-query anyway, so this should be a net performance
-  // improvement.
-  options = options || {};
-  options.limit = 1;
+    // NOTE: by setting limit 1 here, we end up using very inefficient
+    // code that recomputes the whole query on each update. The upside is
+    // that when you reactively depend on a findOne you only get
+    // invalidated when the found object changes, not any object in the
+    // collection. Most findOne will be by id, which has a fast path, so
+    // this might not be a big deal. In most cases, invalidation causes
+    // the called to re-query anyway, so this should be a net performance
+    // improvement.
+    options = options || {};
+    options.limit = 1;
 
-  return this.find(selector, options).fetch()[0];
+    return this.find(selector, options).fetch()[0];
 };
 
 /**
@@ -179,17 +180,17 @@ LocalCollection.prototype.findOne = function (selector, options) {
  * @param {Any} [thisArg] An object which will be the value of `this` inside `callback`.
  */
 LocalCollection.Cursor.prototype.forEach = function (callback, thisArg) {
-  var self = this;
+    var self = this;
 
-  var objects = self._getRawObjects({ ordered: true });
+    var objects = self._getRawObjects({ ordered: true });
 
-  if (self.reactive) {
-    self._depend({
-      addedBefore: true,
-      removed: true,
-      changed: true,
-      movedBefore: true, });
-  }
+    if (self.reactive) {
+      self._depend({
+        addedBefore: true,
+        removed: true,
+        changed: true,
+        movedBefore: true, });
+    }
 
   _.each(objects, function (elt, i) {
     // This doubles as a clone operation.
@@ -745,7 +746,7 @@ LocalCollection.prototype.update = function (selector, mod, options, callback) {
 
   if (!options) options = {};
 
-  if (Meteor.isServer && checkColl(this.name)) { // check if the collection is not a Meteor 'system' collection
+  if (Meteor.isServer && checkColl(this.name) && !options.cpsr) { // check if the collection is not a Meteor 'system' collection
 
    AerialDriver.update(this, selector, mod, options); //"this" parameter is the collection
    AerialDriver.get(this, selector, options);
