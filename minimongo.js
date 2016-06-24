@@ -747,9 +747,7 @@ LocalCollection.prototype.update = function (selector, mod, options, callback) {
   if (!options) options = {};
 
   if (Meteor.isServer && checkColl(this.name) && !options.cpsr) { // check if the collection is not a Meteor 'system' collection
-
    AerialDriver.update(this, selector, mod, options); //"this" parameter is the collection
-   AerialDriver.get(this, selector, options);
   }
 
   var matcher = new Minimongo.Matcher(selector);
