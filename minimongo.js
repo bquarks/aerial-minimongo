@@ -86,8 +86,8 @@ LocalCollection.prototype.find = function (selector, options) {
     if (arguments.length === 0)
       selector = {};
     if (Meteor.isServer && checkColl(this.name)) {
-        // return new LocalCollection.Cursor(new LocalCollection(this.name, this.conf, this._docs), selector, options);
-        return new LocalCollection.Cursor(this, selector, options);
+        return new LocalCollection.Cursor(new LocalCollection(this.name, this.conf), selector, options);
+        // return new LocalCollection.Cursor(this, selector, options);
     }
     else {
         return new LocalCollection.Cursor(this, selector, options);
@@ -107,17 +107,17 @@ LocalCollection.Cursor = function (collection, selector, options) {
     self._options = options;
 
     if (LocalCollection._selectorIsId(selector)) {
-      // stash for fast path
-      self._selectorId = selector;
+        // stash for fast path
+        self._selectorId = selector;
     } else if (LocalCollection._selectorIsIdPerhapsAsObject(selector)) {
-      // also do the fast path for { _id: idString }
-      self._selectorId = selector._id;
+        // also do the fast path for { _id: idString }
+        self._selectorId = selector._id;
     } else {
-      self._selectorId = undefined;
-      if (self.matcher.hasGeoQuery() || options.sort) {
-        self.sorter = new Minimongo.Sorter(options.sort || [],
-                                           { matcher: self.matcher });
-      }
+        self._selectorId = undefined;
+        if (self.matcher.hasGeoQuery() || options.sort) {
+            self.sorter = new Minimongo.Sorter(options.sort || [],
+                                               { matcher: self.matcher });
+        }
     }
 
     self.skip = options.skip;
@@ -133,10 +133,10 @@ LocalCollection.Cursor = function (collection, selector, options) {
       self.reactive = (options.reactive === undefined) ? true : options.reactive;
 
     if (Meteor.isServer && AerialDriver && AerialDriver.configured && checkColl(self.collection.name) && ((options && !options.cpsr) || !options)) {
-      // NOTE: here we find de documents from composr
+        // NOTE: here we find de documents from composr
 
-      // NOTE: handle the errors here
-      AerialDriver.get(self.collection, selector, options);
+        // NOTE: handle the errors here
+        AerialDriver.get(self.collection, selector, options);
     }
 };
 
@@ -185,25 +185,25 @@ LocalCollection.Cursor.prototype.forEach = function (callback, thisArg) {
     var objects = self._getRawObjects({ ordered: true });
 
     if (self.reactive) {
-      self._depend({
-        addedBefore: true,
-        removed: true,
-        changed: true,
-        movedBefore: true, });
+        self._depend({
+            addedBefore: true,
+            removed: true,
+            changed: true,
+            movedBefore: true, });
     }
 
-  _.each(objects, function (elt, i) {
-    // This doubles as a clone operation.
-    elt = self._projectionFn(elt);
+    _.each(objects, function (elt, i) {
+        // This doubles as a clone operation.
+        elt = self._projectionFn(elt);
 
-    if (self._transform)
-      elt = self._transform(elt);
-    callback.call(thisArg, elt, i, self);
-  });
+        if (self._transform)
+          elt = self._transform(elt);
+        callback.call(thisArg, elt, i, self);
+    });
 };
 
 LocalCollection.Cursor.prototype.getTransform = function () {
-  return this._transform;
+    return this._transform;
 };
 
 /**
@@ -216,13 +216,13 @@ LocalCollection.Cursor.prototype.getTransform = function () {
  * @param {Any} [thisArg] An object which will be the value of `this` inside `callback`.
  */
 LocalCollection.Cursor.prototype.map = function (callback, thisArg) {
-  var self = this;
-  var res = [];
-  self.forEach(function (doc, index) {
-    res.push(callback.call(thisArg, doc, index, self));
-  });
+    var self = this;
+    var res = [];
+    self.forEach(function (doc, index) {
+        res.push(callback.call(thisArg, doc, index, self));
+    });
 
-  return res;
+    return res;
 };
 
 /**
@@ -234,13 +234,13 @@ LocalCollection.Cursor.prototype.map = function (callback, thisArg) {
  * @returns {Object[]}
  */
 LocalCollection.Cursor.prototype.fetch = function () {
-  var self = this;
-  var res = [];
-  self.forEach(function (doc) {
-    res.push(doc);
-  });
+    var self = this;
+    var res = [];
+    self.forEach(function (doc) {
+        res.push(doc);
+    });
 
-  return res;
+    return res;
 };
 
 /**
@@ -252,54 +252,54 @@ LocalCollection.Cursor.prototype.fetch = function () {
  * @returns {Number}
  */
 LocalCollection.Cursor.prototype.count = function () {
-  var self = this;
+    var self = this;
 
-  if (self.reactive)
-    self._depend({ added: true, removed: true },
-                 true /* allow the observe to be unordered */);
-  if (Meteor.isServer) {
-    // TODO: count here the objects from a collection
-    return AerialDriver.count(self.collection, self._selector, self._options);
-  }
+    if (self.reactive)
+      self._depend({ added: true, removed: true },
+                   true /* allow the observe to be unordered */);
+    if (Meteor.isServer) {
+        // TODO: count here the objects from a collection
+        return AerialDriver.count(self.collection, self._selector, self._options);
+    }
 
-  return self._getRawObjects({ ordered: true }).length;
+    return self._getRawObjects({ ordered: true }).length;
 };
 
 LocalCollection.Cursor.prototype._publishCursor = function (sub) {
-  var self = this;
-  if (!self.collection.name)
-    throw new Error("Can't publish a cursor from a collection without a name.");
-  var collection = self.collection.name;
+    var self = this;
+    if (!self.collection.name)
+      throw new Error('Can\'t publish a cursor from a collection without a name.');
+    var collection = self.collection.name;
 
-  // XXX minimongo should not depend on mongo-livedata!
-  if (!Package.mongo) {
-    throw new Error("Can't publish from Minimongo without the `mongo` package.");
-  }
+    // XXX minimongo should not depend on mongo-livedata!
+    if (!Package.mongo) {
+        throw new Error('Can\'t publish from Minimongo without the `mongo` package.');
+    }
 
-  return Package.mongo.Mongo.Collection._publishCursor(self, sub, collection);
+    return Package.mongo.Mongo.Collection._publishCursor(self, sub, collection);
 };
 
 LocalCollection.Cursor.prototype._getCollectionName = function () {
-  var self = this;
-  return self.collection.name;
+    var self = this;
+    return self.collection.name;
 };
 
 LocalCollection._observeChangesCallbacksAreOrdered = function (callbacks) {
-  if (callbacks.added && callbacks.addedBefore)
-    throw new Error('Please specify only one of added() and addedBefore()');
-  return !!(callbacks.addedBefore || callbacks.movedBefore);
+    if (callbacks.added && callbacks.addedBefore)
+      throw new Error('Please specify only one of added() and addedBefore()');
+    return !!(callbacks.addedBefore || callbacks.movedBefore);
 };
 
 LocalCollection._observeCallbacksAreOrdered = function (callbacks) {
-  if (callbacks.addedAt && callbacks.added)
-    throw new Error('Please specify only one of added() and addedAt()');
-  if (callbacks.changedAt && callbacks.changed)
-    throw new Error('Please specify only one of changed() and changedAt()');
-  if (callbacks.removed && callbacks.removedAt)
-    throw new Error('Please specify only one of removed() and removedAt()');
+    if (callbacks.addedAt && callbacks.added)
+      throw new Error('Please specify only one of added() and addedAt()');
+    if (callbacks.changedAt && callbacks.changed)
+      throw new Error('Please specify only one of changed() and changedAt()');
+    if (callbacks.removed && callbacks.removedAt)
+      throw new Error('Please specify only one of removed() and removedAt()');
 
-  return !!(callbacks.addedAt || callbacks.movedTo || callbacks.changedAt
-            || callbacks.removedAt);
+    return !!(callbacks.addedAt || callbacks.movedTo || callbacks.changedAt
+              || callbacks.removedAt);
 };
 
 // the handle that comes back from observe.
@@ -327,137 +327,137 @@ LocalCollection.ObserveHandle = function () {};
 // XXX maybe support field limiting (to limit what you're notified on)
 
 _.extend(LocalCollection.Cursor.prototype, {
-  /**
-   * @summary Watch a query.  Receive callbacks as the result set changes.
-   * @locus Anywhere
-   * @memberOf Mongo.Cursor
-   * @instance
-   * @param {Object} callbacks Functions to call to deliver the result set as it changes
-   */
-  observe: function (options) {
-    var self = this;
-    return LocalCollection._observeFromObserveChanges(self, options);
-  },
+    /**
+     * @summary Watch a query.  Receive callbacks as the result set changes.
+     * @locus Anywhere
+     * @memberOf Mongo.Cursor
+     * @instance
+     * @param {Object} callbacks Functions to call to deliver the result set as it changes
+     */
+    observe: function (options) {
+        var self = this;
+        return LocalCollection._observeFromObserveChanges(self, options);
+    },
 
-  /**
-   * @summary Watch a query.  Receive callbacks as the result set changes.  Only the differences between the old and new documents are passed to the callbacks.
-   * @locus Anywhere
-   * @memberOf Mongo.Cursor
-   * @instance
-   * @param {Object} callbacks Functions to call to deliver the result set as it changes
-   */
-  observeChanges: function (options) {
-    var self = this;
+    /**
+     * @summary Watch a query.  Receive callbacks as the result set changes.  Only the differences between the old and new documents are passed to the callbacks.
+     * @locus Anywhere
+     * @memberOf Mongo.Cursor
+     * @instance
+     * @param {Object} callbacks Functions to call to deliver the result set as it changes
+     */
+    observeChanges: function (options) {
+        var self = this;
 
-    var ordered = LocalCollection._observeChangesCallbacksAreOrdered(options);
+        var ordered = LocalCollection._observeChangesCallbacksAreOrdered(options);
 
-    // there are several places that assume you aren't combining skip/limit with
-    // unordered observe.  eg, update's EJSON.clone, and the "there are several"
-    // comment in _modifyAndNotify
-    // XXX allow skip/limit with unordered observe
-    if (!Meteor.isServer && !options._allow_unordered && !ordered && (self.skip || self.limit))
-      throw new Error("must use ordered observe (ie, 'addedBefore' instead of 'added') with skip or limit");
+        // there are several places that assume you aren't combining skip/limit with
+        // unordered observe.  eg, update's EJSON.clone, and the "there are several"
+        // comment in _modifyAndNotify
+        // XXX allow skip/limit with unordered observe
+        if (!Meteor.isServer && !options._allow_unordered && !ordered && (self.skip || self.limit))
+          throw new Error('must use ordered observe (ie, \'addedBefore\' instead of \'added\') with skip or limit');
 
-    if (self.fields && (self.fields._id === 0 || self.fields._id === false))
-      throw Error('You may not observe a cursor with {fields: {_id: 0}}');
+        if (self.fields && (self.fields._id === 0 || self.fields._id === false))
+          throw Error('You may not observe a cursor with {fields: {_id: 0}}');
 
-    var query = {
-      matcher: self.matcher, // not fast pathed
-      sorter: ordered && self.sorter,
-      distances: (
-        self.matcher.hasGeoQuery() && ordered && new LocalCollection._IdMap),
-      resultsSnapshot: null,
-      ordered: ordered,
-      cursor: self,
-      projectionFn: self._projectionFn,
-    };
-    var qid;
+        var query = {
+            matcher: self.matcher, // not fast pathed
+            sorter: ordered && self.sorter,
+            distances: (
+              self.matcher.hasGeoQuery() && ordered && new LocalCollection._IdMap),
+            resultsSnapshot: null,
+            ordered: ordered,
+            cursor: self,
+            projectionFn: self._projectionFn,
+        };
+        var qid;
 
-    // Non-reactive queries call added[Before] and then never call anything
-    // else.
-    if (self.reactive) {
-      qid = self.collection.next_qid++;
-      self.collection.queries[qid] = query;
-    }
+        // Non-reactive queries call added[Before] and then never call anything
+        // else.
+        if (self.reactive) {
+            qid = self.collection.next_qid++;
+            self.collection.queries[qid] = query;
+        }
 
-    query.results = self._getRawObjects({
-      ordered: ordered, distances: query.distances, });
-    if (self.collection.paused)
-      query.resultsSnapshot = (ordered ? [] : new LocalCollection._IdMap);
-
-    // wrap callbacks we were passed. callbacks only fire when not paused and
-    // are never undefined
-    // Filters out blacklisted fields according to cursor's projection.
-    // XXX wrong place for this?
-
-    // furthermore, callbacks enqueue until the operation we're working on is
-    // done.
-    var wrapCallback = function (f) {
-      if (!f)
-        return function () {};
-
-      return function (/*args*/) {
-        var context = this;
-        var args = arguments;
-
+        query.results = self._getRawObjects({
+            ordered: ordered, distances: query.distances, });
         if (self.collection.paused)
-          return;
+          query.resultsSnapshot = (ordered ? [] : new LocalCollection._IdMap);
 
-        self.collection._observeQueue.queueTask(function () {
-          f.apply(context, args);
+        // wrap callbacks we were passed. callbacks only fire when not paused and
+        // are never undefined
+        // Filters out blacklisted fields according to cursor's projection.
+        // XXX wrong place for this?
+
+        // furthermore, callbacks enqueue until the operation we're working on is
+        // done.
+        var wrapCallback = function (f) {
+            if (!f)
+              return function () {};
+
+            return function (/*args*/) {
+              var context = this;
+              var args = arguments;
+
+              if (self.collection.paused)
+                return;
+
+              self.collection._observeQueue.queueTask(function () {
+                f.apply(context, args);
+              });
+            };
+        };
+
+        query.added = wrapCallback(options.added);
+        query.changed = wrapCallback(options.changed);
+        query.removed = wrapCallback(options.removed);
+        if (ordered) {
+            query.addedBefore = wrapCallback(options.addedBefore);
+            query.movedBefore = wrapCallback(options.movedBefore);
+        }
+
+        if (!options._suppress_initial && !self.collection.paused) {
+            // XXX unify ordered and unordered interface
+            var each = ordered
+                  ? _.bind(_.each, null, query.results)
+                  : _.bind(query.results.forEach, query.results);
+            each(function (doc) {
+              var fields = EJSON.clone(doc);
+
+              delete fields._id;
+              if (ordered)
+                query.addedBefore(doc._id, self._projectionFn(fields), null);
+              query.added(doc._id, self._projectionFn(fields));
+            });
+        }
+
+        var handle = new LocalCollection.ObserveHandle;
+        _.extend(handle, {
+          collection: self.collection,
+          stop: function () {
+            if (self.reactive)
+              delete self.collection.queries[qid];
+          },
         });
-      };
-    };
 
-    query.added = wrapCallback(options.added);
-    query.changed = wrapCallback(options.changed);
-    query.removed = wrapCallback(options.removed);
-    if (ordered) {
-      query.addedBefore = wrapCallback(options.addedBefore);
-      query.movedBefore = wrapCallback(options.movedBefore);
-    }
+        if (self.reactive && Tracker.active) {
+          // XXX in many cases, the same observe will be recreated when
+          // the current autorun is rerun.  we could save work by
+          // letting it linger across rerun and potentially get
+          // repurposed if the same observe is performed, using logic
+          // similar to that of Meteor.subscribe.
+          Tracker.onInvalidate(function () {
+            handle.stop();
+          });
+        }
 
-    if (!options._suppress_initial && !self.collection.paused) {
-      // XXX unify ordered and unordered interface
-      var each = ordered
-            ? _.bind(_.each, null, query.results)
-            : _.bind(query.results.forEach, query.results);
-      each(function (doc) {
-        var fields = EJSON.clone(doc);
+      // run the observe callbacks resulting from the initial contents
+      // before we leave the observe.
+      self.collection._observeQueue.drain();
 
-        delete fields._id;
-        if (ordered)
-          query.addedBefore(doc._id, self._projectionFn(fields), null);
-        query.added(doc._id, self._projectionFn(fields));
-      });
-    }
-
-    var handle = new LocalCollection.ObserveHandle;
-    _.extend(handle, {
-      collection: self.collection,
-      stop: function () {
-        if (self.reactive)
-          delete self.collection.queries[qid];
-      },
-    });
-
-    if (self.reactive && Tracker.active) {
-      // XXX in many cases, the same observe will be recreated when
-      // the current autorun is rerun.  we could save work by
-      // letting it linger across rerun and potentially get
-      // repurposed if the same observe is performed, using logic
-      // similar to that of Meteor.subscribe.
-      Tracker.onInvalidate(function () {
-        handle.stop();
-      });
-    }
-
-    // run the observe callbacks resulting from the initial contents
-    // before we leave the observe.
-    self.collection._observeQueue.drain();
-
-    return handle;
-  },
+      return handle;
+    },
 });
 
 // Returns a collection of matching objects, but doesn't deep copy them.
