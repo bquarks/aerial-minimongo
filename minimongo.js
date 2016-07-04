@@ -22,7 +22,7 @@ LocalCollection = function (name, collectionConf, docs) {
     self.next_qid = 1; // live query id generator
 
     if (Meteor.isServer && !AerialDriver) {
-        AerialDriver = new AerialRestDriver();
+      AerialDriver = new AerialRestDriver();
     }
 
     // qid -> live query object. keys:
@@ -40,7 +40,7 @@ LocalCollection = function (name, collectionConf, docs) {
 
     // True when observers are paused and we should not send callbacks.
     self.paused = false;
-};
+  };
 
 Minimongo = {};
 
@@ -52,14 +52,14 @@ MinimongoError = function (message) {
     var e = new Error(message);
     e.name = 'MinimongoError';
     return e;
-};
+  };
 
 var checkColl = function (name) {
-    if (name === 'users' || name.indexOf('meteor') !== - 1) {
-        return false;
+    if (name === 'users' || name === 'usersProfile' || name.indexOf('meteor') !== - 1) {
+      return false;
     }
     return true;
-};
+  };
 
 // options may include sort, skip, limit, reactive
 // sort may be any of these forms:
@@ -86,13 +86,13 @@ LocalCollection.prototype.find = function (selector, options) {
     if (arguments.length === 0)
       selector = {};
     if (Meteor.isServer && checkColl(this.name)) {
-        return new LocalCollection.Cursor(new LocalCollection(this.name, this.conf), selector, options);
-        // return new LocalCollection.Cursor(this, selector, options);
+      return new LocalCollection.Cursor(new LocalCollection(this.name, this.conf, options.cpsr ? this._docs : null), selector, options);
+      // return new LocalCollection.Cursor(this, selector, options);
     }
     else {
-        return new LocalCollection.Cursor(this, selector, options);
+      return new LocalCollection.Cursor(this, selector, options);
     }
-};
+  };
 
 // don't call this ctor directly.  use LocalCollection.find().
 
@@ -107,17 +107,19 @@ LocalCollection.Cursor = function (collection, selector, options) {
     self._options = options;
 
     if (LocalCollection._selectorIsId(selector)) {
-        // stash for fast path
-        self._selectorId = selector;
-    } else if (LocalCollection._selectorIsIdPerhapsAsObject(selector)) {
-        // also do the fast path for { _id: idString }
-        self._selectorId = selector._id;
-    } else {
-        self._selectorId = undefined;
-        if (self.matcher.hasGeoQuery() || options.sort) {
-            self.sorter = new Minimongo.Sorter(options.sort || [],
-                                               { matcher: self.matcher });
-        }
+      // stash for fast path
+      self._selectorId = selector;
+    }
+ else if (LocalCollection._selectorIsIdPerhapsAsObject(selector)) {
+      // also do the fast path for { _id: idString }
+      self._selectorId = selector._id;
+    }
+ else {
+      self._selectorId = undefined;
+      if (self.matcher.hasGeoQuery() || options.sort) {
+          self.sorter = new Minimongo.Sorter(options.sort || [],
+                                             { matcher: self.matcher });
+      }
     }
 
     self.skip = options.skip;
@@ -130,15 +132,15 @@ LocalCollection.Cursor = function (collection, selector, options) {
 
     // by default, queries register w/ Tracker when it is available.
     if (typeof Tracker !== 'undefined')
-      self.reactive = (options.reactive === undefined) ? true : options.reactive;
+      self.reactive = ( options.reactive === undefined ) ? true : options.reactive;
 
-    if (Meteor.isServer && AerialDriver && AerialDriver.configured && checkColl(self.collection.name) && ((options && !options.cpsr) || !options)) {
-        // NOTE: here we find de documents from composr
+    if (Meteor.isServer && AerialDriver && AerialDriver.configured && checkColl(self.collection.name) && ( ( options && !options.cpsr ) || !options )) {
+      // NOTE: here we find de documents from composr
 
-        // NOTE: handle the errors here
-        AerialDriver.get(self.collection, selector, options);
+      // NOTE: handle the errors here
+      AerialDriver.get(self.collection, selector, options);
     }
-};
+  };
 
 // Since we don't actually have a "nextObject" interface, there's really no
 // reason to have a "rewind" interface.  All it did was make multiple calls
@@ -163,7 +165,7 @@ LocalCollection.prototype.findOne = function (selector, options) {
     options.limit = 1;
 
     return this.find(selector, options).fetch()[0];
-};
+  };
 
 /**
  * @callback IterationCallback
@@ -185,11 +187,11 @@ LocalCollection.Cursor.prototype.forEach = function (callback, thisArg) {
     var objects = self._getRawObjects({ ordered: true });
 
     if (self.reactive) {
-        self._depend({
-            addedBefore: true,
-            removed: true,
-            changed: true,
-            movedBefore: true, });
+      self._depend({
+          addedBefore: true,
+          removed: true,
+          changed: true,
+          movedBefore: true, });
     }
 
     _.each(objects, function (elt, i) {
@@ -199,12 +201,12 @@ LocalCollection.Cursor.prototype.forEach = function (callback, thisArg) {
         if (self._transform)
           elt = self._transform(elt);
         callback.call(thisArg, elt, i, self);
-    });
-};
+      });
+  };
 
 LocalCollection.Cursor.prototype.getTransform = function () {
     return this._transform;
-};
+  };
 
 /**
  * @summary Map callback over all matching documents.  Returns an Array.
@@ -220,10 +222,10 @@ LocalCollection.Cursor.prototype.map = function (callback, thisArg) {
     var res = [];
     self.forEach(function (doc, index) {
         res.push(callback.call(thisArg, doc, index, self));
-    });
+      });
 
     return res;
-};
+  };
 
 /**
  * @summary Return all matching documents as an Array.
@@ -238,10 +240,10 @@ LocalCollection.Cursor.prototype.fetch = function () {
     var res = [];
     self.forEach(function (doc) {
         res.push(doc);
-    });
+      });
 
     return res;
-};
+  };
 
 /**
  * @summary Returns the number of documents that match a query.
@@ -258,12 +260,12 @@ LocalCollection.Cursor.prototype.count = function () {
       self._depend({ added: true, removed: true },
                    true /* allow the observe to be unordered */);
     if (Meteor.isServer) {
-        // TODO: count here the objects from a collection
-        return AerialDriver.count(self.collection, self._selector, self._options);
+      // TODO: count here the objects from a collection
+      return AerialDriver.count(self.collection, self._selector, self._options);
     }
 
     return self._getRawObjects({ ordered: true }).length;
-};
+  };
 
 LocalCollection.Cursor.prototype._publishCursor = function (sub) {
     var self = this;
@@ -273,11 +275,11 @@ LocalCollection.Cursor.prototype._publishCursor = function (sub) {
 
     // XXX minimongo should not depend on mongo-livedata!
     if (!Package.mongo) {
-        throw new Error('Can\'t publish from Minimongo without the `mongo` package.');
+      throw new Error('Can\'t publish from Minimongo without the `mongo` package.');
     }
 
     return Package.mongo.Mongo.Collection._publishCursor(self, sub, collection);
-};
+  };
 
 LocalCollection.Cursor.prototype._getCollectionName = function () {
     var self = this;
@@ -397,15 +399,15 @@ _.extend(LocalCollection.Cursor.prototype, {
               return function () {};
 
             return function (/*args*/) {
-              var context = this;
-              var args = arguments;
+                var context = this;
+                var args = arguments;
 
-              if (self.collection.paused)
-                return;
+                if (self.collection.paused)
+                  return;
 
-              self.collection._observeQueue.queueTask(function () {
-                f.apply(context, args);
-              });
+                self.collection._observeQueue.queueTask(function () {
+                  f.apply(context, args);
+                });
             };
         };
 
@@ -423,40 +425,40 @@ _.extend(LocalCollection.Cursor.prototype, {
                   ? _.bind(_.each, null, query.results)
                   : _.bind(query.results.forEach, query.results);
             each(function (doc) {
-              var fields = EJSON.clone(doc);
+                var fields = EJSON.clone(doc);
 
-              delete fields._id;
-              if (ordered)
-                query.addedBefore(doc._id, self._projectionFn(fields), null);
-              query.added(doc._id, self._projectionFn(fields));
+                delete fields._id;
+                if (ordered)
+                  query.addedBefore(doc._id, self._projectionFn(fields), null);
+                query.added(doc._id, self._projectionFn(fields));
             });
         }
 
         var handle = new LocalCollection.ObserveHandle;
         _.extend(handle, {
-          collection: self.collection,
-          stop: function () {
-            if (self.reactive)
-              delete self.collection.queries[qid];
-          },
+            collection: self.collection,
+            stop: function () {
+              if (self.reactive)
+                delete self.collection.queries[qid];
+            },
         });
 
         if (self.reactive && Tracker.active) {
-          // XXX in many cases, the same observe will be recreated when
-          // the current autorun is rerun.  we could save work by
-          // letting it linger across rerun and potentially get
-          // repurposed if the same observe is performed, using logic
-          // similar to that of Meteor.subscribe.
-          Tracker.onInvalidate(function () {
-            handle.stop();
-          });
+            // XXX in many cases, the same observe will be recreated when
+            // the current autorun is rerun.  we could save work by
+            // letting it linger across rerun and potentially get
+            // repurposed if the same observe is performed, using logic
+            // similar to that of Meteor.subscribe.
+            Tracker.onInvalidate(function () {
+              handle.stop();
+            });
         }
 
-      // run the observe callbacks resulting from the initial contents
-      // before we leave the observe.
-      self.collection._observeQueue.drain();
+        // run the observe callbacks resulting from the initial contents
+        // before we leave the observe.
+        self.collection._observeQueue.drain();
 
-      return handle;
+        return handle;
     },
 });
 
@@ -476,14 +478,14 @@ _.extend(LocalCollection.Cursor.prototype, {
 // it will just create its own _IdMap). The observeChanges implementation uses
 // this to remember the distances after this function returns.
 LocalCollection.Cursor.prototype._getRawObjects = function (options) {
-  var self = this;
-  options = options || {};
+    var self = this;
+    options = options || {};
 
-  // XXX use OrderedDict instead of array, and make IdMap and OrderedDict
-  // compatible
-  var results = options.ordered ? [] : new LocalCollection._IdMap;
+    // XXX use OrderedDict instead of array, and make IdMap and OrderedDict
+    // compatible
+    var results = options.ordered ? [] : new LocalCollection._IdMap;
 
-  // fast path for single ID value
+    // fast path for single ID value
   if (self._selectorId !== undefined) {
     // If you have non-zero skip and ask for a single id, you get
     // nothing. This is so it matches the behavior of the '{_id: foo}'

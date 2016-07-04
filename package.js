@@ -1,6 +1,6 @@
 Package.describe({
     name: 'bquarks:aerial-minimongo',
-    version: '0.0.20',
+    version: '0.0.22',
 
     // Brief, one-line summary of the package.
     summary: 'Modified version of minimongo to connect with an api rest',
@@ -11,7 +11,7 @@ Package.describe({
     // By default, Meteor will default to using README.md for documentation.
     // To avoid submitting documentation, set this field to null.
     documentation: 'README.md',
-});
+  });
 
 Package.onUse(function (api) {
     api.versionsFrom('METEOR@1.2.1');
@@ -21,7 +21,7 @@ Package.onUse(function (api) {
     api.use(['underscore', 'ejson', 'id-map', 'ordered-dict', 'tracker',
             'mongo-id', 'random', 'diff-sequence', 'http']);
 
-    api.use(['bquarks:aerial-corbel@0.2.12', 'bquarks:aerial-accounts@0.5.0'], { weak: false });
+    api.use(['bquarks:aerial-corbel@0.2.11', 'bquarks:aerial-accounts@0.5.0'], { weak: false });
 
     // This package is used for geo-location queries such as $near
     api.use('geojson-utils');
@@ -49,7 +49,7 @@ Package.onUse(function (api) {
       'selector_modifier.js',
       'sorter_projection.js',
     ], 'server');
-});
+  });
 
 Package.onTest(function (api) {
     api.use('minimongo', ['client', 'server']);
@@ -59,4 +59,4 @@ Package.onTest(function (api) {
     api.addFiles('minimongo_tests.js', 'client');
     api.addFiles('wrap_transform_tests.js');
     api.addFiles('minimongo_server_tests.js', 'server');
-});
+  });
