@@ -110,15 +110,15 @@ LocalCollection.Cursor = function (collection, selector, options) {
       // stash for fast path
       self._selectorId = selector;
     }
- else if (LocalCollection._selectorIsIdPerhapsAsObject(selector)) {
+    else if (LocalCollection._selectorIsIdPerhapsAsObject(selector)) {
       // also do the fast path for { _id: idString }
       self._selectorId = selector._id;
     }
- else {
+    else {
       self._selectorId = undefined;
       if (self.matcher.hasGeoQuery() || options.sort) {
-          self.sorter = new Minimongo.Sorter(options.sort || [],
-                                             { matcher: self.matcher });
+        self.sorter = new Minimongo.Sorter(options.sort || [],
+                                           { matcher: self.matcher });
       }
     }
 
@@ -284,13 +284,13 @@ LocalCollection.Cursor.prototype._publishCursor = function (sub) {
 LocalCollection.Cursor.prototype._getCollectionName = function () {
     var self = this;
     return self.collection.name;
-};
+  };
 
 LocalCollection._observeChangesCallbacksAreOrdered = function (callbacks) {
     if (callbacks.added && callbacks.addedBefore)
       throw new Error('Please specify only one of added() and addedBefore()');
-    return !!(callbacks.addedBefore || callbacks.movedBefore);
-};
+    return !!( callbacks.addedBefore || callbacks.movedBefore );
+  };
 
 LocalCollection._observeCallbacksAreOrdered = function (callbacks) {
     if (callbacks.addedAt && callbacks.added)
@@ -300,9 +300,9 @@ LocalCollection._observeCallbacksAreOrdered = function (callbacks) {
     if (callbacks.removed && callbacks.removedAt)
       throw new Error('Please specify only one of removed() and removedAt()');
 
-    return !!(callbacks.addedAt || callbacks.movedTo || callbacks.changedAt
-              || callbacks.removedAt);
-};
+    return !!( callbacks.addedAt || callbacks.movedTo || callbacks.changedAt
+              || callbacks.removedAt );
+  };
 
 // the handle that comes back from observe.
 LocalCollection.ObserveHandle = function () {};
@@ -339,7 +339,7 @@ _.extend(LocalCollection.Cursor.prototype, {
     observe: function (options) {
         var self = this;
         return LocalCollection._observeFromObserveChanges(self, options);
-    },
+      },
 
     /**
      * @summary Watch a query.  Receive callbacks as the result set changes.  Only the differences between the old and new documents are passed to the callbacks.
@@ -357,35 +357,35 @@ _.extend(LocalCollection.Cursor.prototype, {
         // unordered observe.  eg, update's EJSON.clone, and the "there are several"
         // comment in _modifyAndNotify
         // XXX allow skip/limit with unordered observe
-        if (!Meteor.isServer && !options._allow_unordered && !ordered && (self.skip || self.limit))
+        if (!Meteor.isServer && !options._allow_unordered && !ordered && ( self.skip || self.limit ))
           throw new Error('must use ordered observe (ie, \'addedBefore\' instead of \'added\') with skip or limit');
 
-        if (self.fields && (self.fields._id === 0 || self.fields._id === false))
+        if (self.fields && ( self.fields._id === 0 || self.fields._id === false ))
           throw Error('You may not observe a cursor with {fields: {_id: 0}}');
 
         var query = {
             matcher: self.matcher, // not fast pathed
             sorter: ordered && self.sorter,
             distances: (
-              self.matcher.hasGeoQuery() && ordered && new LocalCollection._IdMap),
+              self.matcher.hasGeoQuery() && ordered && new LocalCollection._IdMap ),
             resultsSnapshot: null,
             ordered: ordered,
             cursor: self,
             projectionFn: self._projectionFn,
-        };
+          };
         var qid;
 
         // Non-reactive queries call added[Before] and then never call anything
         // else.
         if (self.reactive) {
-            qid = self.collection.next_qid++;
-            self.collection.queries[qid] = query;
+          qid = self.collection.next_qid++;
+          self.collection.queries[qid] = query;
         }
 
         query.results = self._getRawObjects({
             ordered: ordered, distances: query.distances, });
         if (self.collection.paused)
-          query.resultsSnapshot = (ordered ? [] : new LocalCollection._IdMap);
+          query.resultsSnapshot = ( ordered ? [] : new LocalCollection._IdMap );
 
         // wrap callbacks we were passed. callbacks only fire when not paused and
         // are never undefined
@@ -408,30 +408,30 @@ _.extend(LocalCollection.Cursor.prototype, {
                 self.collection._observeQueue.queueTask(function () {
                   f.apply(context, args);
                 });
-            };
-        };
+              };
+          };
 
         query.added = wrapCallback(options.added);
         query.changed = wrapCallback(options.changed);
         query.removed = wrapCallback(options.removed);
         if (ordered) {
-            query.addedBefore = wrapCallback(options.addedBefore);
-            query.movedBefore = wrapCallback(options.movedBefore);
+          query.addedBefore = wrapCallback(options.addedBefore);
+          query.movedBefore = wrapCallback(options.movedBefore);
         }
 
         if (!options._suppress_initial && !self.collection.paused) {
-            // XXX unify ordered and unordered interface
-            var each = ordered
-                  ? _.bind(_.each, null, query.results)
-                  : _.bind(query.results.forEach, query.results);
-            each(function (doc) {
-                var fields = EJSON.clone(doc);
+          // XXX unify ordered and unordered interface
+          var each = ordered
+                ? _.bind(_.each, null, query.results)
+                : _.bind(query.results.forEach, query.results);
+          each(function (doc) {
+              var fields = EJSON.clone(doc);
 
-                delete fields._id;
-                if (ordered)
-                  query.addedBefore(doc._id, self._projectionFn(fields), null);
-                query.added(doc._id, self._projectionFn(fields));
-            });
+              delete fields._id;
+              if (ordered)
+                query.addedBefore(doc._id, self._projectionFn(fields), null);
+              query.added(doc._id, self._projectionFn(fields));
+          });
         }
 
         var handle = new LocalCollection.ObserveHandle;
@@ -441,11 +441,11 @@ _.extend(LocalCollection.Cursor.prototype, {
               if (self.reactive)
                 delete self.collection.queries[qid];
             },
-        });
+          });
 
         if (self.reactive && Tracker.active) {
-            // XXX in many cases, the same observe will be recreated when
-            // the current autorun is rerun.  we could save work by
+          // XXX in many cases, the same observe will be recreated when
+          // the current autorun is rerun.  we could save work by
             // letting it linger across rerun and potentially get
             // repurposed if the same observe is performed, using logic
             // similar to that of Meteor.subscribe.
@@ -895,10 +895,14 @@ LocalCollection.prototype.upsert = function (selector, mod, options, callback) {
   }), callback);
 };
 
-LocalCollection.prototype.distinct = function (field, rel) {
+LocalCollection.prototype.distinct = function (field, rel, domain) {
   if (Meteor.isServer) {
     if (field) {
       var option = rel ? {relation: rel} : {};
+
+      if (domain) {
+        option.domain = domain;
+      }
 
       return AerialDriver.distinct(this, {}, option, field);
     }
