@@ -665,8 +665,7 @@ LocalCollection.prototype.remove = function (selector, options, callback) {
   var self = this;
 
   if (Meteor.isServer) {
-    AerialDriver.remove(self, selector, options);
-    return;
+    return AerialDriver.remove(self, selector, options);
   }
   // Easy special case: if we're not calling observeChanges callbacks and we're
   // not saving originals and we got asked to remove everything, then just empty
@@ -973,7 +972,7 @@ LocalCollection.prototype._modifyAndNotify = function (
     else if (!before && after) {
       LocalCollection._insertInResults(query, doc);
     }
- else if (before && after) {
+    else if (before && after) {
       LocalCollection._updateInResults(query, doc, old_doc);
     }
   }
@@ -992,7 +991,8 @@ LocalCollection._insertInResults = function (query, doc) {
     if (!query.sorter) {
       query.addedBefore(doc._id, query.projectionFn(fields), null);
       query.results.push(doc);
-    } else {
+    }
+ else {
       var i = LocalCollection._insertInSortedList(
         query.sorter.getComparator({ distances: query.distances }),
         query.results, doc);

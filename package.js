@@ -1,6 +1,6 @@
 Package.describe({
     name: 'bquarks:aerial-minimongo',
-    version: '0.0.24',
+    version: '0.0.25',
 
     // Brief, one-line summary of the package.
     summary: 'Modified version of minimongo to connect with an api rest',
