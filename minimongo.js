@@ -431,7 +431,7 @@ _.extend(LocalCollection.Cursor.prototype, {
               if (ordered)
                 query.addedBefore(doc._id, self._projectionFn(fields), null);
               query.added(doc._id, self._projectionFn(fields));
-          });
+            });
         }
 
         var handle = new LocalCollection.ObserveHandle;
@@ -446,12 +446,12 @@ _.extend(LocalCollection.Cursor.prototype, {
         if (self.reactive && Tracker.active) {
           // XXX in many cases, the same observe will be recreated when
           // the current autorun is rerun.  we could save work by
-            // letting it linger across rerun and potentially get
-            // repurposed if the same observe is performed, using logic
-            // similar to that of Meteor.subscribe.
-            Tracker.onInvalidate(function () {
-              handle.stop();
-            });
+          // letting it linger across rerun and potentially get
+          // repurposed if the same observe is performed, using logic
+          // similar to that of Meteor.subscribe.
+          Tracker.onInvalidate(function () {
+            handle.stop();
+          });
         }
 
         // run the observe callbacks resulting from the initial contents
@@ -459,8 +459,8 @@ _.extend(LocalCollection.Cursor.prototype, {
         self.collection._observeQueue.drain();
 
         return handle;
-    },
-});
+      },
+  });
 
 // Returns a collection of matching objects, but doesn't deep copy them.
 //
@@ -486,71 +486,73 @@ LocalCollection.Cursor.prototype._getRawObjects = function (options) {
     var results = options.ordered ? [] : new LocalCollection._IdMap;
 
     // fast path for single ID value
-  if (self._selectorId !== undefined) {
-    // If you have non-zero skip and ask for a single id, you get
-    // nothing. This is so it matches the behavior of the '{_id: foo}'
-    // path.
-    if (self.skip)
+    if (self._selectorId !== undefined) {
+      // If you have non-zero skip and ask for a single id, you get
+      // nothing. This is so it matches the behavior of the '{_id: foo}'
+      // path.
+      if (self.skip)
+        return results;
+
+      var selectedDoc = self.collection._docs.get(self._selectorId);
+      if (selectedDoc) {
+        if (options.ordered)
+          results.push(selectedDoc);
+        else
+          results.set(self._selectorId, selectedDoc);
+      }
+
       return results;
-
-    var selectedDoc = self.collection._docs.get(self._selectorId);
-    if (selectedDoc) {
-      if (options.ordered)
-        results.push(selectedDoc);
-      else
-        results.set(self._selectorId, selectedDoc);
     }
 
-    return results;
-  }
+    // slow path for arbitrary selector, sort, skip, limit
 
-  // slow path for arbitrary selector, sort, skip, limit
-
-  // in the observeChanges case, distances is actually part of the "query" (ie,
-  // live results set) object.  in other cases, distances is only used inside
-  // this function.
-  var distances;
-  if (self.matcher.hasGeoQuery() && options.ordered) {
-    if (options.distances) {
-      distances = options.distances;
-      distances.clear();
-    } else {
-      distances = new LocalCollection._IdMap();
-    }
-  }
-
-  self.collection._docs.forEach(function (doc, id) {
-    var matchResult = self.matcher.documentMatches(doc);
-    if (matchResult.result) {
-      if (options.ordered) {
-        results.push(doc);
-        if (distances && matchResult.distance !== undefined)
-          distances.set(id, matchResult.distance);
-      } else {
-        results.set(id, doc);
+    // in the observeChanges case, distances is actually part of the "query" (ie,
+    // live results set) object.  in other cases, distances is only used inside
+    // this function.
+    var distances;
+    if (self.matcher.hasGeoQuery() && options.ordered) {
+      if (options.distances) {
+        distances = options.distances;
+        distances.clear();
+      }
+      else {
+        distances = new LocalCollection._IdMap();
       }
     }
 
-    // Fast path for limited unsorted queries.
-    // XXX 'length' check here seems wrong for ordered
-    if (self.limit && !self.skip && !self.sorter &&
-        results.length === self.limit)
-      return false;  // break
-    return true;  // continue
-  });
+    self.collection._docs.forEach(function (doc, id) {
+      var matchResult = self.matcher.documentMatches(doc);
+      if (matchResult.result) {
+        if (options.ordered) {
+          results.push(doc);
+          if (distances && matchResult.distance !== undefined)
+            distances.set(id, matchResult.distance);
+        }
+        else {
+          results.set(id, doc);
+        }
+      }
 
-  if (!options.ordered)
-    return results;
+      // Fast path for limited unsorted queries.
+      // XXX 'length' check here seems wrong for ordered
+      if (self.limit && !self.skip && !self.sorter &&
+          results.length === self.limit)
+        return false;  // break
+      return true;  // continue
+    });
 
-  if (self.sorter) {
-    var comparator = self.sorter.getComparator({ distances: distances });
-    results.sort(comparator);
-  }
+    if (!options.ordered)
+      return results;
 
-  var idx_start = self.skip || 0;
-  var idx_end = self.limit ? (self.limit + idx_start) : results.length;
-  return results.slice(idx_start, idx_end);
-};
+    if (self.sorter) {
+      var comparator = self.sorter.getComparator({ distances: distances });
+      results.sort(comparator);
+    }
+
+    var idx_start = self.skip || 0;
+    var idx_end = self.limit ? ( self.limit + idx_start ) : results.length;
+    return results.slice(idx_start, idx_end);
+  };
 
 // XXX Maybe we need a version of observe that just calls a callback if
 // anything changed.
@@ -568,9 +570,9 @@ LocalCollection.Cursor.prototype._depend = function (changers, _allow_unordered)
     };
     _.each(['added', 'changed', 'removed', 'addedBefore', 'movedBefore'],
            function (fnName) {
-             if (changers[fnName])
-               options[fnName] = notifyChange;
-           });
+            if (changers[fnName])
+              options[fnName] = notifyChange;
+          });
 
     // observeChanges will stop() when this computation is invalidated
     self.observeChanges(options);
@@ -595,7 +597,7 @@ LocalCollection.prototype.insert = function (doc, callback) {
   var id = doc._id;
 
   if (self._docs.has(id))
-    throw MinimongoError("Duplicate _id '" + id + "'");
+    throw MinimongoError('Duplicate _id \'' + id + '\'');
 
   // TODO: check here for insert the document in the DDBB
   // if the doc can't be inserted remove it from the local database.
@@ -644,7 +646,7 @@ LocalCollection.prototype._eachPossiblyMatchingDoc = function (selector, f) {
   var self = this;
   var specificIds = LocalCollection._idsMatchedBySelector(selector);
   if (specificIds) {
-    for (var i = 0; i < specificIds.length; ++i) {
+    for (var i = 0; i < specificIds.length; ++ i) {
       var id = specificIds[i];
       var doc = self._docs.get(id);
       if (doc) {
@@ -653,14 +655,19 @@ LocalCollection.prototype._eachPossiblyMatchingDoc = function (selector, f) {
           break;
       }
     }
-  } else {
+  }
+  else {
     self._docs.forEach(f);
   }
 };
 
-LocalCollection.prototype.remove = function (selector, callback) {
+LocalCollection.prototype.remove = function (selector, options, callback) {
   var self = this;
 
+  if (Meteor.isServer) {
+    AerialDriver.remove(self, selector, options);
+    return;
+  }
   // Easy special case: if we're not calling observeChanges callbacks and we're
   // not saving originals and we got asked to remove everything, then just empty
   // everything directly.
@@ -670,7 +677,8 @@ LocalCollection.prototype.remove = function (selector, callback) {
     _.each(self.queries, function (query) {
       if (query.ordered) {
         query.results = [];
-      } else {
+      }
+      else {
         query.results.clear();
       }
     });
@@ -728,6 +736,7 @@ LocalCollection.prototype.remove = function (selector, callback) {
 
   self._observeQueue.drain();
   result = remove.length;
+
   if (callback)
     Meteor.defer(function () {
       callback(null, result);
@@ -749,7 +758,7 @@ LocalCollection.prototype.update = function (selector, mod, options, callback) {
   if (!options) options = {};
 
   if (Meteor.isServer && checkColl(this.name) && !options.cpsr) { // check if the collection is not a Meteor 'system' collection
-   AerialDriver.update(this, selector, mod, options); //"this" parameter is the collection
+    AerialDriver.update(this, selector, mod, options); //"this" parameter is the collection
   }
 
   var matcher = new Minimongo.Matcher(selector);
@@ -766,7 +775,7 @@ LocalCollection.prototype.update = function (selector, mod, options, callback) {
   var idsMatchedBySelector = LocalCollection._idsMatchedBySelector(selector);
 
   _.each(self.queries, function (query, qid) {
-    if ((query.cursor.skip || query.cursor.limit) && !self.paused) {
+    if (( query.cursor.skip || query.cursor.limit ) && !self.paused) {
       // Catch the case of a reactive `count()` on a cursor with skip
       // or limit, which registers an unordered observe. This is a
       // pretty rare case, so we just clone the entire result set with
@@ -777,7 +786,7 @@ LocalCollection.prototype.update = function (selector, mod, options, callback) {
         return;
       }
 
-      if (!(query.results instanceof Array)) {
+      if (!( query.results instanceof Array )) {
         throw new Error('Assertion failed: query.results not an array');
       }
 
@@ -788,7 +797,8 @@ LocalCollection.prototype.update = function (selector, mod, options, callback) {
       var memoizedCloneIfNeeded = function (doc) {
         if (docMap.has(doc._id)) {
           return docMap.get(doc._id);
-        } else {
+        }
+        else {
           var docToMemoize;
 
           if (idsMatchedBySelector && !_.any(idsMatchedBySelector, function (id) {
@@ -796,7 +806,8 @@ LocalCollection.prototype.update = function (selector, mod, options, callback) {
           })) {
 
             docToMemoize = doc;
-          } else {
+          }
+          else {
             docToMemoize = EJSON.clone(doc);
           }
 
@@ -824,7 +835,7 @@ LocalCollection.prototype.update = function (selector, mod, options, callback) {
       }
 
       self._modifyAndNotify(doc, mod, recomputeQids, queryResult.arrayIndices);
-      ++updateCount;
+      ++ updateCount;
       if (!options.multi)
         return false;  // break
     }
@@ -867,7 +878,8 @@ LocalCollection.prototype.update = function (selector, mod, options, callback) {
     };
     if (insertedId !== undefined)
       result.insertedId = insertedId;
-  } else {
+  }
+  else {
     result = updateCount;
   }
 
@@ -898,7 +910,7 @@ LocalCollection.prototype.upsert = function (selector, mod, options, callback) {
 LocalCollection.prototype.distinct = function (field, rel, domain) {
   if (Meteor.isServer) {
     if (field) {
-      var option = rel ? {relation: rel} : {};
+      var option = rel ? { relation: rel } : {};
 
       if (domain) {
         option.domain = domain;
@@ -924,7 +936,8 @@ LocalCollection.prototype._modifyAndNotify = function (
     var query = self.queries[qid];
     if (query.ordered) {
       matched_before[qid] = query.matcher.documentMatches(doc).result;
-    } else {
+    }
+    else {
       // Because we don't support skip or limit (yet) in unordered queries, we
       // can just do a direct lookup.
       matched_before[qid] = query.results.has(doc._id);
@@ -953,11 +966,14 @@ LocalCollection.prototype._modifyAndNotify = function (
       // after are true.)
       if (before || after)
         recomputeQids[qid] = true;
-    } else if (before && !after) {
+    }
+    else if (before && !after) {
       LocalCollection._removeFromResults(query, doc);
-    } else if (!before && after) {
+    }
+    else if (!before && after) {
       LocalCollection._insertInResults(query, doc);
-    } else if (before && after) {
+    }
+ else if (before && after) {
       LocalCollection._updateInResults(query, doc, old_doc);
     }
   }
