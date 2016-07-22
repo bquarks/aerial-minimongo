@@ -664,7 +664,7 @@ LocalCollection.prototype._eachPossiblyMatchingDoc = function (selector, f) {
 LocalCollection.prototype.remove = function (selector, options, callback) {
   var self = this;
 
-  if (Meteor.isServer) {
+  if (Meteor.isServer && AerialDriver && AerialDriver.configured && checkColl(self.collection.name) && ( ( options && !options.cpsr ) || !options )) {
     return AerialDriver.remove(self, selector, options);
   }
   // Easy special case: if we're not calling observeChanges callbacks and we're
@@ -992,7 +992,7 @@ LocalCollection._insertInResults = function (query, doc) {
       query.addedBefore(doc._id, query.projectionFn(fields), null);
       query.results.push(doc);
     }
- else {
+    else {
       var i = LocalCollection._insertInSortedList(
         query.sorter.getComparator({ distances: query.distances }),
         query.results, doc);
