@@ -664,7 +664,7 @@ LocalCollection.prototype._eachPossiblyMatchingDoc = function (selector, f) {
 LocalCollection.prototype.remove = function (selector, options, callback) {
   var self = this;
 
-  if (Meteor.isServer && AerialDriver && AerialDriver.configured && checkColl(self.collection.name) && ( ( options && !options.cpsr ) || !options )) {
+  if (Meteor.isServer && AerialDriver && AerialDriver.configured && checkColl(self.name) && ( ( options && !options.cpsr ) || !options )) {
     return AerialDriver.remove(self, selector, options);
   }
   // Easy special case: if we're not calling observeChanges callbacks and we're
