@@ -122,7 +122,7 @@ LocalCollection.Cursor = function (collection, selector, options) {
       }
     }
 
-    self.skip = options.skip;
+    // self.skip = options.skip;
     self.limit = options.limit;
     self.fields = options.fields;
 
